@@ -1,6 +1,6 @@
 "use client"
 
-import { TasteMatch } from "@/components/taste-match"
+import { TasteMatch } from "../../../components/taste-match"
 
 export default function TasteMatchPage() {
   // SCENARIO 1 — High Match (≥90%)
