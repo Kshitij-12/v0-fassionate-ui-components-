@@ -41,6 +41,7 @@ function Button({
   variant,
   size,
   asChild = false,
+  'aria-label': ariaLabel,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
@@ -51,8 +52,12 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
       {...props}
+      aria-label={ariaLabel ?? 'Primary action'}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        'focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-700/30'
+      )}
     />
   )
 }

@@ -24,7 +24,7 @@ export function WelcomeScreen({ onEnter, onSignup }: { onEnter: () => void; onSi
       </div>
 
       {/* content */}
-      <div className="relative z-10 flex flex-col items-center text-center gap-4 max-w-lg">
+      <div className="relative z-10 flex flex-col items-center text-center gap-6 w-full px-4">
         <h1
           className="text-[14vw] font-extrabold leading-none text-white"
           style={{ animation: "float-up 0.8s ease-out" }}
