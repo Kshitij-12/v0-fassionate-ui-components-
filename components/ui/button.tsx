@@ -6,9 +6,18 @@ import { cn } from "@/lib/utils"
 
 // ✅ Lightweight Slot fallback — NO external deps
 function SlotPolyfill({ children, ...props }: any) {
-  const child = React.Children.only(children) as React.ReactElement | null
-  if (!child) return null
-  return React.cloneElement(child, { ...props, ...child.props })
+  const child = React.Children.only(children) as React.ReactElement<any> | null;
+
+  if (!child) return null;
+  
+  // Force widen props so TS knows they are objects
+  const childProps = (child as any).props ?? {};
+  
+  return React.cloneElement(child, {
+    ...(props as any),
+    ...childProps
+  });
+  
 }
 
 const buttonVariants = cva(
