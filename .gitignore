@@ -1,0 +1,7 @@
+﻿node_modules/
+.next/
+dist/
+dev.log
+devers.log
+.env.local
+.vscode/
