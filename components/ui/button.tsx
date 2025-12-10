@@ -4,7 +4,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-// ✅ Zero-dependency Slot polyfill
+// ✅ Lightweight Slot fallback — NO external deps
 function SlotPolyfill({ children, ...props }: any) {
   const child = React.Children.only(children) as React.ReactElement | null
   if (!child) return null
@@ -45,8 +45,8 @@ export function Button({
 }: ButtonProps) {
   const Comp: any = asChild ? SlotPolyfill : "button"
 
-  const ariaLabel =
-    (props as any)["aria-label"] ?? (children ? undefined : "Primary action")
+  // ✅ Safe ARIA fallback
+  const ariaLabel = (props as any)["aria-label"] ?? (children ? undefined : "Primary action")
 
   return (
     <Comp
