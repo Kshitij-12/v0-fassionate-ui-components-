@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/postcss": "^4.1.17",
     "@vercel/analytics": "latest",
     "class-variance-authority": "^0.7.1",
