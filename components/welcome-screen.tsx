@@ -2,7 +2,13 @@
 
 import { useEffect, useRef } from "react"
 
-export function WelcomeScreen({ onEnter, onSignup }: { onEnter: () => void; onSignup: () => void }) {
+export function WelcomeScreen({
+  onEnter,
+  onSignup,
+}: {
+  onEnter: () => void
+  onSignup: () => void
+}) {
   const root = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -16,47 +22,57 @@ export function WelcomeScreen({ onEnter, onSignup }: { onEnter: () => void; onSi
       ref={root}
       className="min-h-screen relative flex flex-col items-center justify-center overflow-hidden bg-black px-6"
     >
-      {/* ----------------------------------------------------------- */}
-      {/*  CENTERED BACKGROUND ORB — FIXED TO VIEWPORT                */}
-      {/* ----------------------------------------------------------- */}
+      {/* ---------------------------------------------------------------------- */}
+      {/*  RESPONSIVE VIEWPORT-FIXED ORBS (works identical on mobile + desktop) */}
+      {/* ---------------------------------------------------------------------- */}
       <div aria-hidden className="pointer-events-none">
-        {/* Main Pink/Purple Orb (centered always) */}
+        {/* MAIN PURPLE-PINK ORB (centered always) */}
         <div
           className="
-            fixed left-1/2 top-1/2 
-            -translate-x-1/2 -translate-y-1/2 
-            z-0 
-            w-[70vmax] h-[70vmax] 
+            fixed left-1/2 
+            top-[42%]                     /* mobile visual center */
+            md:top-[45%]                  /* tablet adjustment */
+            lg:top-1/2                    /* desktop perfect center */
+            -translate-x-1/2 -translate-y-1/2
+            z-0
+            w-[120vw]                     /* mobile wide coverage */
+            sm:w-[95vw]                   
+            md:w-[70vmax]                 
+            lg:w-[55vmax]                 /* desktop balanced */
+            aspect-square
             rounded-full 
             blur-[120px]
           "
           style={{
             background:
-              "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.95) 0%, rgba(255,59,134,0.85) 40%, rgba(0,0,0,0) 70%)",
+              "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.95) 0%, rgba(255,59,134,0.85) 40%, rgba(0,0,0,0) 75%)",
             opacity: 0.92,
             mixBlendMode: "screen",
           }}
         />
 
-        {/* Secondary Green Accent */}
+        {/* GREEN ACCENT ORB */}
         <div
           className="
-            fixed right-[8%] bottom-[-10%] 
-            z-0 
-            w-[420px] h-[420px] 
-            rounded-full 
-            blur-[160px] 
+            fixed
+            right-[6%] 
+            bottom-[-10%]
+            z-0
+            w-[300px] h-[300px]
+            sm:w-[420px] sm:h-[420px]
+            rounded-full
+            blur-[160px]
             opacity-20
           "
           style={{
             background:
-              "radial-gradient(circle at center, rgba(16,185,129,0.9) 0%, rgba(139,92,246,0.3) 70%)",
+              "radial-gradient(circle at center, rgba(16,185,129,0.9) 0%, rgba(139,92,246,0.25) 70%)",
           }}
         />
       </div>
-      {/* ----------------------------------------------------------- */}
+      {/* ---------------------------------------------------------------------- */}
 
-      {/* ---------------------- CONTENT SECTION --------------------- */}
+      {/* -------------------------------- CONTENT ----------------------------- */}
       <div className="relative z-10 flex flex-col items-center text-center gap-6 w-full px-4">
         <h1
           className="text-[14vw] font-extrabold leading-none text-white"
