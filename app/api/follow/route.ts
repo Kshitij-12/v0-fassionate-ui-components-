@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       // idempotent follow: ignore duplicates using upsert on (follower_id, following_id)
       const { error } = await supabaseServer
         .from('followers')
-        .upsert({ follower_id: user.id, following_id: target_user_id }, { onConflict: ['follower_id', 'following_id'] })
+        .upsert({ follower_id: user.id, following_id: target_user_id }, { onConflict: 'follower_id,following_id' })
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

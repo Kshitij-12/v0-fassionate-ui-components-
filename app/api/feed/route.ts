@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     const LIMIT = 50
 
     // Try RPC first (recommended for stable nested / aggregate)
-    const { data: rpcData, error: rpcErr } = await supabaseServer.rpc('get_feed_public', { limit_arg: LIMIT })
+    const { data: rpcData, error: rpcErr } = await (supabaseServer as any).rpc('get_feed_public', { limit_arg: LIMIT })
 
     if (!rpcErr && rpcData) {
       const feed = (rpcData as any[]).map((r: any) => ({
