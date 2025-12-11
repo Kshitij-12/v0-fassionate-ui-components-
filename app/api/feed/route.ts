@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     if (!rpcErr && rpcData) {
       const feed = (rpcData as any[]).map((r: any) => ({
-        id: r.post_id,
+        id: r.id,
         image_url: r.image_url,
         caption: r.caption,
         tags: r.tags,
@@ -37,13 +37,11 @@ export async function GET(req: Request) {
     // Fallback: aggregate on server-side
     const { data, error } = await supabaseServer
       .from('posts')
-      .select(
-        `id,image_url,caption,tags,created_at, author:profiles (id,username,avatar_url), _likes:likes (id)`
-      )
+      .select('id,image_url,caption,tags,created_at,user_id,profiles(id,username,avatar_url),likes(id)')
       .order('created_at', { ascending: false })
       .limit(LIMIT)
 
-    if (error) return NextResponse.json({ error: (rpcErr?.message ?? error.message) || 'Failed to load feed' }, { status: 500 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     const transformed = (data || []).map((p: any) => ({
       id: p.id,
@@ -51,8 +49,8 @@ export async function GET(req: Request) {
       caption: p.caption,
       tags: p.tags,
       created_at: p.created_at,
-      author: p.author ? { id: p.author.id, username: p.author.username, avatar_url: p.author.avatar_url } : null,
-      like_count: Array.isArray(p._likes) ? p._likes.length : 0,
+      author: p.profiles ? { id: p.profiles.id, username: p.profiles.username, avatar_url: p.profiles.avatar_url } : null,
+      like_count: Array.isArray(p.likes) ? p.likes.length : 0,
     }))
 
     return NextResponse.json({ feed: transformed })

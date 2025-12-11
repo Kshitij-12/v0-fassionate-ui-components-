@@ -28,7 +28,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_followers_following_id ON public.fol
 -- Returns rows with post + author info + like_count
 CREATE OR REPLACE FUNCTION public.get_feed_public(limit_arg integer)
 RETURNS TABLE (
-  post_id uuid,
+  id uuid,
   image_url text,
   caption text,
   tags text[],
@@ -52,12 +52,13 @@ AS $$
     pr.avatar_url AS author_avatar_url,
     COALESCE(lc.count, 0)::int AS like_count
   FROM public.posts p
-  JOIN public.profiles pr ON pr.id = p.author_id
+  JOIN public.profiles pr ON pr.id = p.user_id
   LEFT JOIN (
     SELECT post_id, count(*)::int AS count FROM public.likes GROUP BY post_id
   ) lc ON lc.post_id = p.id
   ORDER BY p.created_at DESC
   LIMIT $1;
+$$;
 $$;
 
 -- Grant execute to authenticated and anon so RPC can be called publicly (RPC still returns only allowed columns)
