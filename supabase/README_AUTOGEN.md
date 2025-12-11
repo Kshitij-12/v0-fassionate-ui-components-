@@ -1,0 +1,248 @@
+# Supabase Backend Setup - FASSIONATE
+
+This directory contains the complete Supabase backend for FASSIONATE, including database migrations, Row Level Security (RLS) policies, and Edge Functions.
+
+## Project Configuration
+
+**Supabase Project Ref:** `qqdpeobwzwscxotigrwm`
+
+## File Structure
+
+```
+supabase/
+├── migrations/
+│   ├── 20231201000000_create_tables.sql       # Table creation
+│   └── 20231201000001_enable_rls.sql          # RLS policies
+├── functions/
+│   ├── createTasteMatch/index.ts              # POST /createTasteMatch
+│   ├── getTasteMatches/index.ts               # GET /getTasteMatches
+│   ├── createPost/index.ts                    # POST /createPost
+│   ├── getFeed/index.ts                       # GET /getFeed
+│   ├── followUser/index.ts                    # POST /followUser
+│   └── getProfile/index.ts                    # GET /getProfile
+├── generated/
+│   └── types.ts                               # TypeScript type definitions
+└── config.toml                                # Supabase configuration
+```
+
+## Database Schema
+
+The backend includes the following tables:
+- **profiles**: User profile information (username, display_name, bio, avatar_url)
+- **posts**: User posts with image_url, caption, and tags
+- **likes**: Like relationships between users and posts
+- **followers**: Follower relationships between users
+- **taste_matches**: AI taste match results with score and details
+
+All tables have Row Level Security (RLS) enabled with appropriate policies for data access control.
+
+## Quick Start
+
+### 1. Link Your Project
+
+```bash
+npx supabase link --project-ref qqdpeobwzwscxotigrwm
+```
+
+### 2. Push Migrations to Cloud
+
+Apply all database migrations to your linked Supabase project:
+
+```bash
+npx supabase db push --linked
+```
+
+### 3. Deploy Edge Functions
+
+Deploy all functions to Supabase:
+
+```bash
+npx supabase functions deploy createTasteMatch --project-ref qqdpeobwzwscxotigrwm
+npx supabase functions deploy getTasteMatches --project-ref qqdpeobwzwscxotigrwm
+npx supabase functions deploy createPost --project-ref qqdpeobwzwscxotigrwm
+npx supabase functions deploy getFeed --project-ref qqdpeobwzwscxotigrwm
+npx supabase functions deploy followUser --project-ref qqdpeobwzwscxotigrwm
+npx supabase functions deploy getProfile --project-ref qqdpeobwzwscxotigrwm
+```
+
+**Or deploy all at once:**
+
+```bash
+npx supabase functions deploy --project-ref qqdpeobwzwscxotigrwm
+```
+
+### 4. Generate TypeScript Types (Optional)
+
+If you want to regenerate types from your database schema:
+
+```bash
+npx supabase gen types typescript --project-ref qqdpeobwzwscxotigrwm > supabase/generated/types.ts
+```
+
+## API Endpoints
+
+All endpoints are deployed as Supabase Edge Functions and available at:
+`https://<project-id>.supabase.co/functions/v1/<functionName>`
+
+### Authentication
+
+All endpoints (except `getFeed`) require Bearer token authentication:
+
+```
+Authorization: Bearer <user_access_token>
+```
+
+### Endpoint Reference
+
+#### 1. Create Taste Match
+- **Function:** `createTasteMatch`
+- **Method:** POST
+- **Body:**
+  ```json
+  {
+    "target_id": "uuid",
+    "score": 85,
+    "details": { "category": "fashion", "match_reason": "..." }
+  }
+  ```
+- **Response:** 201 Created
+
+#### 2. Get Taste Matches
+- **Function:** `getTasteMatches`
+- **Method:** GET
+- **Response:** 200 OK (array of taste matches)
+
+#### 3. Create Post
+- **Function:** `createPost`
+- **Method:** POST
+- **Body:**
+  ```json
+  {
+    "image_url": "https://...",
+    "caption": "Check out this outfit!",
+    "tags": ["fashion", "outfit", "style"]
+  }
+  ```
+- **Response:** 201 Created
+
+#### 4. Get Feed
+- **Function:** `getFeed`
+- **Method:** GET
+- **Query Params:** `?limit=50`
+- **Response:** 200 OK (array of posts with author info and like counts)
+- **Note:** Public endpoint (no auth required)
+
+#### 5. Follow User
+- **Function:** `followUser`
+- **Method:** POST
+- **Body:**
+  ```json
+  {
+    "target_id": "uuid"
+  }
+  ```
+- **Response:** 201 Created (or 200 if already following)
+
+#### 6. Get Profile
+- **Function:** `getProfile`
+- **Method:** GET
+- **Query Params:** `?user_id=uuid`
+- **Response:** 200 OK
+  ```json
+  {
+    "id": "uuid",
+    "username": "...",
+    "display_name": "...",
+    "bio": "...",
+    "avatar_url": "...",
+    "post_count": 42,
+    "follower_count": 100,
+    "following_count": 50,
+    "posts": [...]
+  }
+  ```
+
+## Testing with cURL
+
+### Example: Create a Post
+
+```bash
+curl -X POST https://qqdpeobwzwscxotigrwm.supabase.co/functions/v1/createPost \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_url": "https://example.com/image.jpg",
+    "caption": "My new outfit!",
+    "tags": ["fashion", "outfit"]
+  }'
+```
+
+### Example: Get Feed
+
+```bash
+curl -X GET 'https://qqdpeobwzwscxotigrwm.supabase.co/functions/v1/getFeed?limit=20'
+```
+
+### Example: Get Profile
+
+```bash
+curl -X GET 'https://qqdpeobwzwscxotigrwm.supabase.co/functions/v1/getProfile?user_id=YOUR_USER_ID'
+```
+
+## RLS Policies Summary
+
+### profiles
+- `SELECT`: Public read access
+- `INSERT`: Authenticated users can create their own profile
+- `UPDATE`: Users can update their own profile only
+
+### posts
+- `SELECT`: Public read access
+- `INSERT`: Authenticated users can create posts
+- `UPDATE/DELETE`: Only post owner can modify
+
+### likes
+- `SELECT`: Public read access
+- `INSERT`: Authenticated users can like posts
+- `DELETE`: Users can unlike only their own likes
+
+### followers
+- `SELECT`: Public read access
+- `INSERT`: Authenticated users can follow others
+- `DELETE`: Users can unfollow themselves only
+
+### taste_matches
+- `SELECT`: Users can view their own taste matches
+- `INSERT`: Authenticated users can create matches for themselves
+- `UPDATE/DELETE`: Disabled (immutable records)
+
+## Environment Variables
+
+The Edge Functions use the following environment variables (automatically set by Supabase):
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_ANON_KEY`: Public API key for anonymous requests
+
+## Troubleshooting
+
+### Migrations not applying?
+1. Check that you're linked to the correct project:
+   ```bash
+   npx supabase projects list
+   ```
+2. Verify migrations have unique timestamps
+3. Check the Supabase dashboard for migration errors
+
+### Functions returning 401 Unauthorized?
+1. Ensure you're passing a valid Bearer token
+2. Verify the token is from the correct Supabase project
+3. Check that the user exists in your auth system
+
+### TypeScript import errors in functions?
+The functions use ES modules and Deno runtime. Ensure you're using `https://esm.sh/` for imports.
+
+## Next Steps
+
+1. **Connect from frontend:** Use `@supabase/supabase-js` in your React/Next.js app
+2. **Add more functions:** Follow the same pattern in `supabase/functions/`
+3. **Monitor usage:** Check Supabase dashboard for function logs and errors
+4. **Scale security:** Add more specific RLS policies based on business requirements

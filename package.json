@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/postcss": "^4.1.17",
     "@vercel/analytics": "latest",
     "class-variance-authority": "^0.7.1",
@@ -28,6 +29,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.5",
+    "supabase": "^2.66.0",
     "tailwindcss": "^4.1.9",
     "typescript": "^5"
   }
