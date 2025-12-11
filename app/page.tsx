@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { WelcomeScreen } from "@/components/welcome-screen"
-import { SignupScreen } from "@/components/signup-screen"
-import { AestheticSelectionScreen } from "@/components/aesthetic-selection-screen"
+import { WelcomeScreen } from "../components/welcome-screen"
+import { SignupScreen } from "../components/signup-screen"
+import { AestheticSelectionScreen } from "../components/aesthetic-selection-screen"
 
 type Screen = "welcome" | "signup" | "aesthetics"
 
