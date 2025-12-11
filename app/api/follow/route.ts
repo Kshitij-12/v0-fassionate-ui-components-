@@ -1,37 +1,45 @@
-import { NextResponse } from "next/server";
-import { supabaseServer, validateToken } from "@/lib/supabaseServer";
+import { NextResponse } from 'next/server'
+import { supabaseServer, getUserFromToken } from '@/lib/supabaseServer'
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { target_id } = body ?? {};
-    if (!target_id) return NextResponse.json({ error: "Missing target_id" }, { status: 400 });
+    const auth = req.headers.get('authorization') ?? ''
+    const token = auth.startsWith('Bearer ') ? auth.split(' ')[1] : auth || null
 
-    const { user, error } = await validateToken(req.headers.get("authorization") || "");
-    if (!user || error) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { data: user, error: userErr } = await getUserFromToken(token)
+    if (userErr || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const follower_id = user.id;
-    if (follower_id === target_id) return NextResponse.json({ error: "Cannot follow yourself" }, { status: 400 });
+    const body = await req.json().catch(() => null)
+    if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
 
-    // Check if already following
-    const { data: existing } = await supabaseServer
-      .from("followers")
-      .select("*")
-      .eq("follower_id", follower_id)
-      .eq("following_id", target_id)
-      .maybeSingle();
+    const { target_user_id, action } = body
+    if (!target_user_id || typeof target_user_id !== 'string') {
+      return NextResponse.json({ error: 'target_user_id (string) is required' }, { status: 400 })
+    }
+    if (!["follow", "unfollow"].includes(action)) {
+      return NextResponse.json({ error: 'action must be "follow" or "unfollow"' }, { status: 400 })
+    }
 
-    if (existing) return NextResponse.json({ message: "Already following" }, { status: 200 });
+    if (action === 'follow') {
+      // idempotent follow: ignore duplicates using upsert on (follower_id, following_id)
+      const { error } = await supabaseServer
+        .from('followers')
+        .upsert({ follower_id: user.id, following_id: target_user_id }, { onConflict: ['follower_id', 'following_id'] })
 
-    const { data, error } = await supabaseServer
-      .from("followers")
-      .insert({ follower_id, following_id: target_id })
-      .select()
-      .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ data }, { status: 201 });
+      return NextResponse.json({ followed: true }, { status: 201 })
+    } else {
+      const { error } = await supabaseServer
+        .from('followers')
+        .delete()
+        .match({ follower_id: user.id, following_id: target_user_id })
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+      return NextResponse.json({ unfollowed: true })
+    }
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? "Server error" }, { status: 500 });
+    return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 })
   }
 }

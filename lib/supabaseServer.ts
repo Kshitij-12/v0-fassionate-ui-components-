@@ -1,29 +1,25 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/supabase/generated/types'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!url || !serviceRole) {
+if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error(
-    "Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
-  );
+    'Missing environment variables NEXT_PUBLIC_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY'
+  )
 }
 
-export const supabaseServer = createClient(url, serviceRole, {
+export const supabaseServer = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
   auth: { persistSession: false },
-});
-export async function validateToken(authHeader?: string) {
+})
+
+export async function getUserFromToken(token?: string | null) {
+  if (!token) return { data: null, error: { message: 'No token provided' } }
   try {
-    const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
-    if (!token) return { user: null, error: "No token provided" };
-
-    const {
-      data: { user },
-      error,
-    } = await supabaseServer.auth.getUser(token);
-
-    return { user, error: error?.message };
-  } catch (err) {
-    return { user: null, error: String(err) };
+    const { data, error } = await supabaseServer.auth.getUser(token)
+    return { data: data?.user ?? null, error }
+  } catch (err: any) {
+    return { data: null, error: { message: err?.message ?? String(err) } }
   }
 }
