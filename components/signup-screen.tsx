@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { supabaseClient } from "@/lib/supabaseClient"
 
 interface SignupForm {
   email: string
@@ -27,20 +27,59 @@ export function SignupScreen({
     college: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setError("")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    // Simulate signup
-    setTimeout(() => {
+    setError("")
+
+    try {
+      // Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/protected`,
+        },
+      })
+
+      if (authError || !authData.user) {
+        throw new Error(authError?.message || "Signup failed")
+      }
+
+      // Create profile
+      const { error: profileError } = await supabaseClient.from("profiles").insert([
+        {
+          id: authData.user.id,
+          username: form.username,
+          college: form.college,
+        },
+      ])
+
+      if (profileError) {
+        throw new Error(profileError.message)
+      }
+
+      // Store token for later use
+      if (authData.session?.access_token) {
+        localStorage.setItem("sb-access-token", authData.session.access_token)
+      }
+
+      setTimeout(() => {
+        setIsSubmitting(false)
+        onSignupComplete()
+      }, 500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
       setIsSubmitting(false)
-      onSignupComplete()
-    }, 500)
+    }
   }
 
   const isFormValid = form.email && form.password && form.username && form.college
@@ -63,6 +102,11 @@ export function SignupScreen({
           <h2 className="text-4xl font-black tracking-tight text-white mb-2">Create Account</h2>
           <p className="text-white/60 text-sm">Join the underground fashion scene</p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded text-red-300 text-sm">{error}</div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
