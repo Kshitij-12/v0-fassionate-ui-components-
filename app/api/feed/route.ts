@@ -1,37 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabaseServer
-      .from("posts")
-      .select(
-        `
-        id,
-        image_url,
-        caption,
-        tags,
-        created_at,
-        user_id,
-        profiles:user_id(username, avatar_url),
-        likes(count)
-      `
-      )
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const url = new URL(req.url);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+
+    // Call the RPC function to fetch feed with author info and like counts
+    const { data, error } = await supabaseServer.rpc("get_feed_public", { limit_arg: limit });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Transform response to include like_count
-    const transformedData = (data || []).map((post: any) => ({
-      ...post,
-      like_count: post.likes?.[0]?.count ?? 0,
-      likes: undefined,
-    }));
-
-    return NextResponse.json({ data: transformedData }, { status: 200 });
+    return NextResponse.json({ data: data || [] }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Server error" }, { status: 500 });
   }
