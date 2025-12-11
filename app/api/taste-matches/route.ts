@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer, validateToken } from "@/lib/supabaseServer";
 
 export async function GET(req: Request) {
   try {
-    const token = (req.headers.get("authorization") || "").replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, error } = await validateToken(req.headers.get("authorization") || "");
+    if (!user || error) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: userData, error: userErr } = await supabaseServer.auth.getUser(token);
-    if (userErr || !userData?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user_id = userData.user.id;
+    const user_id = user.id;
 
     const { data, error } = await supabaseServer
       .from("taste_matches")

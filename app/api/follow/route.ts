@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer, validateToken } from "@/lib/supabaseServer";
 
 export async function POST(req: Request) {
   try {
@@ -7,13 +7,10 @@ export async function POST(req: Request) {
     const { target_id } = body ?? {};
     if (!target_id) return NextResponse.json({ error: "Missing target_id" }, { status: 400 });
 
-    const token = (req.headers.get("authorization") || "").replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, error } = await validateToken(req.headers.get("authorization") || "");
+    if (!user || error) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: userData, error: userErr } = await supabaseServer.auth.getUser(token);
-    if (userErr || !userData?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const follower_id = userData.user.id;
+    const follower_id = user.id;
     if (follower_id === target_id) return NextResponse.json({ error: "Cannot follow yourself" }, { status: 400 });
 
     // Check if already following
