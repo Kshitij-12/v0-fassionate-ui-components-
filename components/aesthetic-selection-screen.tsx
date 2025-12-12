@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { supabaseClient } from "@/lib/supabaseClient"
 
 const aesthetics = [
   "DRIPLORDS",
@@ -20,12 +21,45 @@ const aesthetics = [
 
 export function AestheticSelectionScreen({ onComplete }: { onComplete: () => void }) {
   const [selected, setSelected] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   function toggle(tag: string) {
     if (selected.includes(tag)) {
       setSelected(selected.filter((t) => t !== tag))
     } else if (selected.length < 2) {
       setSelected([...selected, tag])
+    }
+  }
+
+  const handleComplete = async () => {
+    if (selected.length === 0) return
+
+    setIsSubmitting(true)
+    setError("")
+
+    try {
+      const {
+        data: { user },
+      } = await supabaseClient.auth.getUser()
+
+      if (!user) {
+        throw new Error("Not authenticated")
+      }
+
+      const { error: updateError } = await supabaseClient
+        .from("profiles")
+        .update({ aesthetics: selected })
+        .eq("id", user.id)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      onComplete()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save aesthetics")
+      setIsSubmitting(false)
     }
   }
 
@@ -39,6 +73,10 @@ export function AestheticSelectionScreen({ onComplete }: { onComplete: () => voi
       <div className="relative z-10 max-w-2xl mx-auto">
         <h2 className="text-4xl font-black text-white mb-2 float-up">Choose Your Code</h2>
         <p className="text-white/60 mb-10">Pick up to 2 identities that define how you move.</p>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded text-red-300 text-sm">{error}</div>
+        )}
 
         <div className="grid grid-cols-2 gap-5">
           {aesthetics.map((tag, idx) => {
@@ -67,11 +105,11 @@ export function AestheticSelectionScreen({ onComplete }: { onComplete: () => voi
 
         <div className="fixed bottom-0 left-0 right-0 p-4 backdrop-blur-xl bg-black/60">
           <Button
-            disabled={selected.length === 0}
-            onClick={onComplete}
+            disabled={selected.length === 0 || isSubmitting}
+            onClick={handleComplete}
             className="w-full h-14 rounded-none tracking-widest uppercase font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 disabled:opacity-40 text-black hover:glow-neon-pink transition-all"
           >
-            Lock My Taste
+            {isSubmitting ? "Locking..." : "Lock My Taste"}
           </Button>
         </div>
       </div>

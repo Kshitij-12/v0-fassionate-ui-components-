@@ -9,13 +9,13 @@ importers:
   .:
     dependencies:
       '@radix-ui/react-slot':
-        specifier: latest
+        specifier: 1.2.4
         version: 1.2.4(@types/react@19.0.0)(react@19.0.0)
       '@supabase/ssr':
-        specifier: latest
+        specifier: 0.8.0
         version: 0.8.0(@supabase/supabase-js@2.87.1)
       '@supabase/supabase-js':
-        specifier: latest
+        specifier: 2.87.1
         version: 2.87.1
       '@vercel/analytics':
         specifier: latest
@@ -33,7 +33,7 @@ importers:
         specifier: 16.0.0
         version: 16.0.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       next-themes:
-        specifier: latest
+        specifier: 0.4.6
         version: 0.4.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react:
         specifier: ^19.0.0

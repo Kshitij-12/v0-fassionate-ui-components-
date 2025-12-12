@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, Share2 } from "lucide-react"
+import { Heart, MessageCircle, Share2, RefreshCw } from "lucide-react"
 
 interface FeedPost {
   id: string
@@ -20,35 +20,41 @@ export function FeedScreen() {
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const fetchFeed = async (showLoader = true) => {
+    if (showLoader) setIsLoading(true)
+    else setIsRefreshing(true)
+
+    try {
+      const token = localStorage.getItem("sb-access-token")
+      if (!token) {
+        setError("Not authenticated")
+        return
+      }
+
+      const response = await fetch("/api/feed?limit=20", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to load feed")
+      }
+
+      const data = await response.json()
+      setPosts(data)
+      setError("")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchFeed = async () => {
-      try {
-        const token = localStorage.getItem("sb-access-token")
-        if (!token) {
-          setError("Not authenticated")
-          return
-        }
-
-        const response = await fetch("/api/feed?limit=20", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to load feed")
-        }
-
-        const data = await response.json()
-        setPosts(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchFeed()
   }, [])
 
@@ -91,10 +97,18 @@ export function FeedScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-md border-b border-white/10 p-4">
+      <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-md border-b border-white/10 p-4 flex items-center justify-between">
         <h1 className="text-2xl font-black text-white tracking-tight">Feed</h1>
+        <button
+          onClick={() => fetchFeed(false)}
+          disabled={isRefreshing}
+          className="p-2 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
+          aria-label="Refresh feed"
+        >
+          <RefreshCw size={20} className={`text-white ${isRefreshing ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
       {/* Posts Feed */}
@@ -102,7 +116,10 @@ export function FeedScreen() {
         {error && <div className="p-4 m-4 bg-red-500/20 border border-red-500/50 rounded text-red-300">{error}</div>}
 
         {posts.length === 0 ? (
-          <div className="flex items-center justify-center py-20 text-white/60">No posts yet. Be the first!</div>
+          <div className="flex flex-col items-center justify-center py-20 text-white/60 gap-4">
+            <p>No posts yet. Be the first!</p>
+            <p className="text-sm text-white/40">Tap the + button to share your drip</p>
+          </div>
         ) : (
           posts.map((post) => (
             <article key={post.id} className="border-b border-white/10 p-4 hover:bg-white/5 transition-colors">
