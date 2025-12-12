@@ -26,20 +26,20 @@ export async function POST(request: NextRequest) {
 
     const tags = JSON.parse(tagsJson || "[]")
 
-    // Upload to Supabase Storage
     const timestamp = Date.now()
     const filename = `${userData.user.id}/${timestamp}-${file.name}`
 
-    const { data: uploadData, error: uploadError } = await supabaseServer.storage.from("posts").upload(filename, file, {
-      upsert: false,
-    })
+    const { data: uploadData, error: uploadError } = await supabaseServer.storage
+      .from("ootd-images")
+      .upload(filename, file, {
+        upsert: false,
+      })
 
     if (uploadError) {
       throw new Error(uploadError.message)
     }
 
-    // Get public URL
-    const { data } = supabaseServer.storage.from("posts").getPublicUrl(filename)
+    const { data } = supabaseServer.storage.from("ootd-images").getPublicUrl(filename)
 
     const image_url = data.publicUrl
 
